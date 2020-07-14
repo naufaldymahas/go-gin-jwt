@@ -42,14 +42,15 @@ func Login(c *gin.Context) {
 	}
 
 	us := service.UserService(config.InitDB())
+	defer us.DB.Close()
 
-	u, ok := us.LoginUser(auth)
+	t, ok := us.LoginUser(auth)
 	if ok == false {
-		c.String(http.StatusUnauthorized, "")
+		c.Status(http.StatusUnauthorized)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user": u,
+		"token": t,
 	})
 }
