@@ -5,6 +5,7 @@ import (
 	"github.com/naufaldymahas/go-gin-jwt/src/config"
 	"github.com/naufaldymahas/go-gin-jwt/src/model"
 	"github.com/naufaldymahas/go-gin-jwt/src/router"
+	"github.com/naufaldymahas/go-gin-jwt/src/util"
 )
 
 func migrate() {
@@ -20,6 +21,13 @@ func main() {
 	r := gin.Default()
 
 	router.AuthRouter(r)
+
+	v1 := r.Group("/api/v1")
+
+	v1.Use(util.VerifyToken())
+	{
+		router.UserRouter(v1)
+	}
 
 	r.Run()
 }

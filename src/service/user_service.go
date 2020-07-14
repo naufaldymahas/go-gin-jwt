@@ -19,7 +19,7 @@ func UserService(db *gorm.DB) userService {
 	}
 }
 
-func (us userService) CreateUser(auth payload.AuthRegister) error {
+func (us *userService) CreateUser(auth payload.AuthRegister) error {
 	var user model.User
 
 	user.Name = auth.Name
@@ -47,18 +47,35 @@ func (us userService) CreateUser(auth payload.AuthRegister) error {
 	return tx.Commit().Error
 }
 
-func (us userService) LoginUser(auth payload.AuthLogin) (model.User, bool) {
+func (us *userService) LoginUser(auth payload.AuthLogin) (string, bool) {
 	var user model.User
 
 	if err := us.DB.Where("email = ?", auth.Email).First(&user).Error; err != nil {
 		log.Println(err.Error())
-		return user, false
+		return "", false
 	}
 
 	if user.Password != util.HashPassword(auth.Password) {
 		log.Println("Authentication Failed!")
-		return user, false
+		return "", false
 	}
 
-	return user, true
+	token, err := util.TokenGenerator(user.Email)
+	if err != nil {
+		log.Println("JWT token failed:", token)
+		return "", false
+	}
+
+	return token, true
+}
+
+func (us *userService) FindByEmail(email string) (model.User, error) {
+	var user model.User
+
+	if err := us.DB.Where("email = ?", email).First(&user).Error; err != nil {
+		log.Println(err.Error())
+		return user, err
+	}
+
+	return user, nil
 }
